@@ -2,7 +2,6 @@
 #include <stdint.h>
 
 #include "tgaimage.h"
-#include "util.h"
 
 #define WIDTH 64
 #define HEIGHT 64

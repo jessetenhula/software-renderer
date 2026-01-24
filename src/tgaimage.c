@@ -6,6 +6,9 @@
 #define RGBA_BITS_PER_PIXEL 32
 #define ALPHA_BITS 8
 
+/* helper macros */
+#define swap_int32(a, b) { int32_t t = a; a = b; b = t; }
+
 /* create basic TGA header for image with 32 bits per pixel data, uncompressed or rle */
 TGAHeader CreateTGAHeader(uint16_t width, uint16_t height, bool rle)
 {
@@ -203,7 +206,7 @@ Pixel *LoadTGAImageFromFile(FILE *file, TGAHeader *h)
 }
 
 /* set pixel if in range of image data */
-void SetPixel(Pixel *data, TGAHeader h, uint32_t x, uint32_t y, Pixel p)
+void SetPixel(Pixel *data, TGAHeader h, int32_t x, int32_t y, Pixel p)
 {
 	uint32_t i = h.width * y + x;
 
@@ -211,4 +214,37 @@ void SetPixel(Pixel *data, TGAHeader h, uint32_t x, uint32_t y, Pixel p)
 		return;
 
 	data[i] = p;
+}
+
+/* draw line */
+void DrawLine(Pixel *data, TGAHeader h, int32_t ax, int32_t ay, int32_t bx, int32_t by, Pixel color)
+{
+	/* line is actually a point */
+	if (ax == bx && ay == by)
+		SetPixel(data, h, ax, ay, color);
+
+	bool steep = (abs(by - ay) > abs(bx - ax));
+	if (steep) {
+		swap_int32(ax, ay);
+		swap_int32(bx, by);
+	}
+
+	if (ax > bx) {
+		swap_int32(ax, bx);
+		swap_int32(ay, by);
+	}
+
+	float dy = (by - ay) / (float) (bx - ax);
+
+	float y = ay + 0.5;
+	for (float x = ax; x <= bx; x += 1) {
+		float t = (x - ax) / (float) (bx - ax);
+
+		if (steep)
+			SetPixel(data, h, y, x, color);
+		else
+			SetPixel(data, h, x, y, color);
+
+		y += dy;
+	}
 }

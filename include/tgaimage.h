@@ -38,6 +38,7 @@ void WriteTGAImageToFile(FILE *file, TGAHeader h, Pixel *data);
 Pixel *LoadTGAImageFromFile(FILE *file, TGAHeader *h);
 
 /* Image data manipulation */
-void SetPixel(Pixel *data, TGAHeader h, uint32_t x, uint32_t y, Pixel p);
+void SetPixel(Pixel *data, TGAHeader h, int32_t x, int32_t y, Pixel p);
+void DrawLine(Pixel *data, TGAHeader h, int32_t ax, int32_t ay, int32_t bx, int32_t by, Pixel color);
 
 #endif /* TGAIMAGE_H */

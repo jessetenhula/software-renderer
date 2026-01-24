@@ -32,8 +32,12 @@ typedef enum {
 	RLE = 1,
 } PacketType;
 
+/* TGA Image loading/writing */
 TGAHeader CreateTGAHeader(uint16_t width, uint16_t height, bool rle);
 void WriteTGAImageToFile(FILE *file, TGAHeader h, Pixel *data);
-Pixel *ReadTGAImageFromFile(FILE *file, TGAHeader *h);
+Pixel *LoadTGAImageFromFile(FILE *file, TGAHeader *h);
+
+/* Image data manipulation */
+void SetPixel(Pixel *data, TGAHeader h, uint32_t x, uint32_t y, Pixel p);
 
 #endif /* TGAIMAGE_H */

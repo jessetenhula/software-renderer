@@ -101,11 +101,10 @@ void WriteRLEData(FILE *file, TGAHeader h, Pixel *data)
 		} else {
 			/* raw */
 
-			for (int32_t next = start + 2; next < data_size && run_length < 128; next++) {
-				Pixel px_current = data[next - 1];
-				Pixel px_next = data[next];
-
-				if (PixelsEqual(px_current, px_next) || next % h.width == 0)
+			for (int32_t peek = start + 2; peek < data_size && run_length < 128; peek++) {
+				Pixel px_end = data[peek - 1];
+				Pixel px_peek = data[peek];
+				if (PixelsEqual(px_end, px_peek) || peek % h.width == 0)
 					break;
 
 				run_length++;
@@ -164,14 +163,14 @@ static Pixel *ReadRLEData(FILE *file, TGAHeader h)
 	return data;
 }
 
-Pixel *ReadTGAImageFromFile(FILE *file, TGAHeader *h)
+Pixel *LoadTGAImageFromFile(FILE *file, TGAHeader *h)
 {
 	fread(&h->id_length, sizeof(h->id_length), 1, file);
 	fread(&h->color_map_type, sizeof(h->color_map_type), 1, file);
 	fread(&h->image_type, sizeof(h->image_type), 1, file);
 
 	if (h->image_type != UNCOMPRESSED_TRUE_COLOR && h->image_type != RLE_TRUE_COLOR) {
-		printf("ReadTGAImageFromFile: Only run-length-encoded and uncompressed truecolor supported\n");
+		printf("LoadTGAImageFromFile: Only run-length-encoded and uncompressed truecolor supported\n");
 		return NULL;
 	}
 
@@ -184,7 +183,7 @@ Pixel *ReadTGAImageFromFile(FILE *file, TGAHeader *h)
 	fread(&h->bpp, sizeof(h->bpp), 1, file);
 
 	if (h->bpp != RGBA_BITS_PER_PIXEL) {
-		printf("ReadTGAImageFromFile: Only 32 bits per pixel supported\n");
+		printf("LoadTGAImageFromFile: Only 32 bits per pixel supported\n");
 		return NULL;
 	}
 
@@ -198,7 +197,18 @@ Pixel *ReadTGAImageFromFile(FILE *file, TGAHeader *h)
 		fread(data, sizeof(Pixel), h->width * h->height, file);
 		return data;
 	} else {
-		printf("ReadTGAImageFromFile: Unsupported image type\n");
+		printf("LoadTGAImageFromFile: Unsupported image type\n");
 		return NULL;
 	}
+}
+
+/* set pixel if in range of image data */
+void SetPixel(Pixel *data, TGAHeader h, uint32_t x, uint32_t y, Pixel p)
+{
+	uint32_t i = h.width * y + x;
+
+	if (i < 0 || i > h.width * h.height)
+		return;
+
+	data[i] = p;
 }

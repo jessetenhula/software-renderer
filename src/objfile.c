@@ -119,6 +119,20 @@ static void ReadFace(FILE *file, OBJ *obj)
 	/* list put */
 }
 
+static OBJ *InitializeOBJ(void)
+{
+	OBJ *obj = malloc(sizeof(OBJ));
+
+	obj->v_count = 0;
+	obj->f_count = 0;
+	obj->v_capacity = INITIAL_VERTEX_CAPACITY;
+	obj->f_capacity = INITIAL_FACE_CAPACITY;
+	obj->vs = malloc(obj->v_capacity * sizeof(Vertex));
+	obj->fs = malloc(obj->f_capacity * sizeof(Face));
+
+	return obj;
+}
+
 OBJ *LoadOBJFile(const char *filename)
 {
 	FILE *file = fopen(filename, "r");
@@ -127,14 +141,9 @@ OBJ *LoadOBJFile(const char *filename)
 		return NULL;
 	}
 
+	OBJ *obj = InitializeOBJ();
+
 	int32_t c;
-
-	OBJ *obj = malloc(sizeof(OBJ));;
-	obj->v_capacity = INITIAL_VERTEX_CAPACITY;
-	obj->f_capacity = INITIAL_FACE_CAPACITY;
-	obj->vs = malloc(obj->v_capacity * sizeof(Vertex));
-	obj->fs = malloc(obj->f_capacity * sizeof(Face));
-
 	while((c = fgetc(file)) != EOF) {
 		switch (c) {
 			case '#':

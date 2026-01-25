@@ -120,10 +120,13 @@ void WriteRLEData(FILE *file, TGAHeader h, Pixel *data)
 	}
 }
 
-void WriteTGAImageToFile(FILE *file, TGAHeader h, Pixel *data)
+void WriteTGAImage(const char *filename, TGAHeader h, Pixel *data)
 {
+	FILE *file = fopen(filename, "wb");
+
 	if (h.bpp != RGBA_BITS_PER_PIXEL) {
-		printf("WriteTGAImageToFile: Only 32 bits per pixel supported\n");
+		printf("WriteTGAImage: Only 32 bits per pixel supported\n");
+		fclose(file);
 		return;
 	}
 
@@ -136,6 +139,8 @@ void WriteTGAImageToFile(FILE *file, TGAHeader h, Pixel *data)
 	if (h.image_type == RLE_TRUE_COLOR) {
 		WriteRLEData(file, h, data);
 	}
+
+	fclose(file);
 }
 
 
@@ -166,15 +171,21 @@ static Pixel *ReadRLEData(FILE *file, TGAHeader h)
 	return data;
 }
 
-Pixel *LoadTGAImageFromFile(FILE *file, TGAHeader *h)
+Pixel *LoadTGAImage(const char *filename, TGAHeader *h)
 {
+	FILE *file = fopen(filename, "rb");
+	if (file == NULL) {
+		printf("LoadTGAImage: Unable to load file %s\n", filename);
+		goto error;
+	}
+
 	fread(&h->id_length, sizeof(h->id_length), 1, file);
 	fread(&h->color_map_type, sizeof(h->color_map_type), 1, file);
 	fread(&h->image_type, sizeof(h->image_type), 1, file);
 
 	if (h->image_type != UNCOMPRESSED_TRUE_COLOR && h->image_type != RLE_TRUE_COLOR) {
-		printf("LoadTGAImageFromFile: Only run-length-encoded and uncompressed truecolor supported\n");
-		return NULL;
+		printf("LoadTGAImage: Only run-length-encoded and uncompressed truecolor supported\n");
+		goto error;
 	}
 
 	fread(&h->color_map_spec, sizeof(h->color_map_spec), 1, file);
@@ -186,23 +197,29 @@ Pixel *LoadTGAImageFromFile(FILE *file, TGAHeader *h)
 	fread(&h->bpp, sizeof(h->bpp), 1, file);
 
 	if (h->bpp != RGBA_BITS_PER_PIXEL) {
-		printf("LoadTGAImageFromFile: Only 32 bits per pixel supported\n");
-		return NULL;
+		printf("LoadTGAImage: Only 32 bits per pixel supported\n");
+		goto error;
 	}
 
 	fread(&h->image_descriptor, sizeof(h->image_descriptor), 1, file);
 
+	Pixel *data;
 	if (h->image_type == RLE_TRUE_COLOR) {
-		Pixel *data = ReadRLEData(file, *h);
-		return data;
+		data = ReadRLEData(file, *h);
 	} else if (h->image_type == UNCOMPRESSED_TRUE_COLOR) {
-		Pixel *data = malloc(h->width * h->height * sizeof(Pixel));
+		data = malloc(h->width * h->height * sizeof(Pixel));
 		fread(data, sizeof(Pixel), h->width * h->height, file);
-		return data;
 	} else {
-		printf("LoadTGAImageFromFile: Unsupported image type\n");
-		return NULL;
+		printf("LoadTGAImage: Unsupported image type\n");
+		goto error;
 	}
+
+	fclose(file);
+	return data;
+error:
+	if (file != NULL)
+		fclose(file);
+	return NULL;
 }
 
 /* set pixel if in range of image data */

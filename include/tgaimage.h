@@ -21,7 +21,7 @@ typedef struct {
 	uint8_t image_descriptor;	/* specifies alpha channel depth, pixel ordering etc. */
 } TGAHeader;
 
-/* tga saves pixels in BRGA order */
+/* TGA saves pixels in BRGA order */
 typedef struct {
 	uint8_t b, g, r, a;
 } Pixel;
@@ -34,8 +34,8 @@ typedef enum {
 
 /* TGA Image loading/writing */
 TGAHeader CreateTGAHeader(uint16_t width, uint16_t height, bool rle);
-void WriteTGAImageToFile(FILE *file, TGAHeader h, Pixel *data);
-Pixel *LoadTGAImageFromFile(FILE *file, TGAHeader *h);
+void WriteTGAImage(const char *filename, TGAHeader h, Pixel *data);
+Pixel *LoadTGAImage(const char *filename, TGAHeader *h);
 
 /* Image data manipulation */
 void SetPixel(Pixel *data, TGAHeader h, int32_t x, int32_t y, Pixel p);

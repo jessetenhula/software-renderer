@@ -68,17 +68,17 @@ Point Screen(Point p, uint32_t width, uint32_t height)
 	return p;
 }
 
-void RenderWireframeTGA(OBJ *obj, Pixel *canvas, TGAHeader h)
+void RenderWireframeTGA(OBJ *obj, Image img)
 {
-	int32_t width = h.width;
-	int32_t height = h.height;
+	int32_t width = img.width;
+	int32_t height = img.height;
 	float rot = 3.14 / 2;
 
 	for (int32_t i = 0; i < obj->f_count; i++) {
 		Face f = obj->fs[i];
 		for (int32_t j = 0; j < f.count; j++) {
-			Vertex startv = obj->vs[f.v_is[j] - 1];
-			Vertex endv = obj->vs[f.v_is[(j + 1) % f.count] - 1];
+			Vertex startv = obj->vs[f.v_is[j]];
+			Vertex endv = obj->vs[f.v_is[(j + 1) % f.count]];
 
 			startv = RotateXZ(startv, rot);
 			endv = RotateXZ(endv, rot);
@@ -86,7 +86,7 @@ void RenderWireframeTGA(OBJ *obj, Pixel *canvas, TGAHeader h)
 			Point startp = Screen(ProjectOrthogonal(startv), width, height);
 			Point endp = Screen(ProjectOrthogonal(endv), width, height);
 
-			DrawLine(canvas, h, (int32_t) startp.x, (int32_t) startp.y, (int32_t) endp.x, (int32_t) endp.y, red);
+			DrawLine(img, (int32_t) startp.x, (int32_t) startp.y, (int32_t) endp.x, (int32_t) endp.y, red);
 		}
 	}
 
@@ -95,25 +95,28 @@ void RenderWireframeTGA(OBJ *obj, Pixel *canvas, TGAHeader h)
 		v = RotateXZ(v, rot);
 
 		Point screen_point = Screen(ProjectOrthogonal(v), width, height);
-		SetPixel(canvas, h, (int32_t) screen_point.x, (int32_t) screen_point.y, white);
+		SetPixel(img, (int32_t) screen_point.x, (int32_t) screen_point.y, white);
 	}
 }
 
 int main(int argc, char *argv[])
 {
 
-	/* file setup */
-	TGAHeader header = CreateTGAHeader(WIDTH, HEIGHT, 1);
+	Image img;
+	img.width = WIDTH;
+	img.height = HEIGHT;
 
-	Pixel *img = malloc(WIDTH * HEIGHT * sizeof(Pixel));
-	for (int i = 0; i < WIDTH * HEIGHT; i++)
-		img[i] = black;
+	img.data = malloc(img.width * img.height * sizeof(Pixel));
+	for (int i = 0; i < img.width * img.height; i++)
+		img.data[i] = black;
 
 	OBJ *obj = LoadOBJFile("obj/diablo3_pose.obj"); 
 
-	RenderWireframeTGA(obj, img, header);
+	RenderWireframeTGA(obj, img);
 
-	WriteTGAImage("image/render.tga", header, img);
+	OBJFree(obj);
+
+	WriteTGAImage("image/render.tga", img, true);
 
 	return 0;
 }

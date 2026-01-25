@@ -1,5 +1,6 @@
 #include "objfile.h"
 
+
 static void ReadComment(FILE *file)
 {
 	int32_t c;
@@ -61,6 +62,7 @@ static void ReadVertex(FILE *file, OBJ *obj)
 	int32_t return_code = ReadToken(file, token, TOKEN_MAX_LENGTH);
 	v.z = atof(token);
 
+	/* optional w value */
 	if (return_code != END_OF_LINE) {
 		ReadToken(file, token, TOKEN_MAX_LENGTH);
 		v.w = atof(token);
@@ -83,14 +85,27 @@ static void ReadFace(FILE *file, OBJ *obj)
 
 	Face f;
 	f.count = 0;
-	f.v_is = malloc(FACE_MAX_VERTICES * sizeof(*(f.v_is)));
+	/* assume the face is a triangle */
+	f.v_is = malloc(3 * sizeof(*(f.v_is)));
 
 	int32_t return_code = 0;
 
 	do {
+		/* if face is not a triangle, allocate space for maximum amount of vertices */
+		if (f.count == 3) 
+			f.v_is = realloc(f.v_is, FACE_MAX_VERTICES * sizeof(*(f.v_is)));
+
 		return_code = ReadToken(file, token, TOKEN_MAX_LENGTH);
 		/* only reads the regular vertex index (v) */
-		f.v_is[f.count++] = atoi(token);
+		int32_t i = atoi(token);
+
+		/* reject faces with negative indices */
+		if (i < 0) {
+			free(f.v_is);
+			return;
+		}
+
+		f.v_is[f.count++] = i - 1;
 	} while (return_code != END_OF_LINE && f.count < FACE_MAX_VERTICES);
 
 	/* list put */
@@ -147,3 +162,19 @@ OBJ *LoadOBJFile(const char *filename)
 	return obj;
 }
 
+void OBJFree(OBJ *obj)
+{
+	for (int i = 0; i < obj->f_count; i++) {
+		Face f = obj->fs[i];
+		if (f.v_is != NULL)
+			free(f.v_is);
+	}
+
+	if (obj->fs != NULL)
+		free(obj->fs);
+	
+	if (obj->vs != NULL)
+		free(obj->vs);
+
+	free(obj);
+}

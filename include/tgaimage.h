@@ -26,19 +26,28 @@ typedef struct {
 	uint8_t b, g, r, a;
 } Pixel;
 
+/* simple container for 32 bpp image */
+typedef struct {
+	uint16_t width;
+	uint16_t height;
+	Pixel *data;
+} Image;
+
 /* rle packet header high-order bit */
 typedef enum {
 	RAW = 0,
 	RLE = 1,
 } PacketType;
 
-/* TGA Image loading/writing */
-TGAHeader CreateTGAHeader(uint16_t width, uint16_t height, bool rle);
-void WriteTGAImage(const char *filename, TGAHeader h, Pixel *data);
-Pixel *LoadTGAImage(const char *filename, TGAHeader *h);
+/* 32 bpp BGRA TGA Image loading/writing */
+void WriteTGAImage(const char *filename, Image img, bool rle);
+Image *LoadTGAImage(const char *filename);
+
+/* destructor for loaded image */
+void ImageFree(Image *img);
 
 /* Image data manipulation */
-void SetPixel(Pixel *data, TGAHeader h, int32_t x, int32_t y, Pixel p);
-void DrawLine(Pixel *data, TGAHeader h, int32_t ax, int32_t ay, int32_t bx, int32_t by, Pixel color);
+void SetPixel(Image img, int32_t x, int32_t y, Pixel color);
+void DrawLine(Image img, int32_t ax, int32_t ay, int32_t bx, int32_t by, Pixel color);
 
 #endif /* TGAIMAGE_H */

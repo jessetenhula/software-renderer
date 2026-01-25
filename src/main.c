@@ -7,7 +7,7 @@
 
 #define WIDTH 800
 #define HEIGHT 800
-#define MODEL_DISTANCE 1.5
+#define MODEL_DISTANCE 2
 
 Pixel black = { 0, 0, 0, 255 };
 Pixel white = { 255, 255, 255, 255 };
@@ -27,7 +27,7 @@ Vertex RotateXZ(Vertex v, float rad)
 	return v;
 }
 
-/* returns a 2d projected point */
+/* returns a 2d projected point in perspective */
 Point Project(Vertex v)
 {
 	Point p;
@@ -48,21 +48,31 @@ Point Project(Vertex v)
 	return p;
 }
 
+/* returns a 2d orthogonally projected point */
+Point ProjectOrthogonal(Vertex v)
+{
+	Point p;
+
+	p.x = v.x;
+	p.y = v.y;
+
+	return p;
+}
+
 /* returns a point with the screen coordinates of a 2d projected point */
 Point Screen(Point p, uint32_t width, uint32_t height)
 {
-	Point s;
+	p.x = ((p.x + 1) / 2) * (float) width;
+	p.y = ((p.y + 1) / 2) * (float) height;
 
-	s.x = ((p.x + 1) / 2) * (float) width;
-	s.y = ((p.y + 1) / 2) * (float) height;
-
-	return s;
+	return p;
 }
 
 void RenderWireframeTGA(OBJ *obj, Pixel *canvas, TGAHeader h)
 {
 	int32_t width = h.width;
 	int32_t height = h.height;
+	float rot = 3.14 / 2;
 
 	for (int32_t i = 0; i < obj->f_count; i++) {
 		Face f = obj->fs[i];
@@ -70,22 +80,23 @@ void RenderWireframeTGA(OBJ *obj, Pixel *canvas, TGAHeader h)
 			Vertex startv = obj->vs[f.v_is[j] - 1];
 			Vertex endv = obj->vs[f.v_is[(j + 1) % f.count] - 1];
 
-			float rot = 3.14 / 2;
 			startv = RotateXZ(startv, rot);
 			endv = RotateXZ(endv, rot);
 
-			Point startp = Screen(Project(startv), width, height);
-			Point endp = Screen(Project(endv), width, height);
+			Point startp = Screen(ProjectOrthogonal(startv), width, height);
+			Point endp = Screen(ProjectOrthogonal(endv), width, height);
 
 			DrawLine(canvas, h, (int32_t) startp.x, (int32_t) startp.y, (int32_t) endp.x, (int32_t) endp.y, red);
 		}
 	}
 
-//	for (int32_t i = 0; i < obj->v_count; i++) {
-//		Vertex v = obj->vs[i];
-//		Point screen_point = Screen(Project(v), width, height);
-//		SetPixel(canvas, h, (int32_t) screen_point.x, (int32_t) screen_point.y, white);
-//	}
+	for (int32_t i = 0; i < obj->v_count; i++) {
+		Vertex v = obj->vs[i];
+		v = RotateXZ(v, rot);
+
+		Point screen_point = Screen(ProjectOrthogonal(v), width, height);
+		SetPixel(canvas, h, (int32_t) screen_point.x, (int32_t) screen_point.y, white);
+	}
 }
 
 int main(int argc, char *argv[])

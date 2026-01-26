@@ -2,6 +2,10 @@
 #define GEOMETRY_H
 
 typedef struct {
+	float x, y, z, w;
+} Vec4;
+
+typedef struct {
 	float x, y, z;
 } Vec3;
 

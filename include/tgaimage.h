@@ -28,7 +28,6 @@ void ImageFree(Image *img);
 void SetPixel(Image img, int32_t x, int32_t y, Pixel color);
 void DrawLine(Image img, int32_t ax, int32_t ay, int32_t bx, int32_t by, Pixel color);
 
-void DrawTriangleLines(Image img, int32_t ax, int32_t ay, int32_t bx, int32_t by, int32_t cx, int32_t cy, Pixel color);
 void DrawTriangle(Image img, int32_t ax, int32_t ay, int32_t bx, int32_t by, int32_t cx, int32_t cy, Pixel color);
 
 #endif /* TGAIMAGE_H */

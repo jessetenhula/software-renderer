@@ -291,12 +291,6 @@ void DrawLine(Image img, int32_t ax, int32_t ay, int32_t bx, int32_t by, Pixel c
 	}
 }
 
-/* gets the x at a given y on a line defined by a point and its slope */
-static float GetLineX(int32_t ax, int32_t ay, float slope, int32_t y)
-{
-	return (slope * ax - ay + y) / slope;
-}
-
 static void DrawScanline(Image img, int32_t ax, int32_t bx, int32_t y, Pixel color)
 {
 	if (ax > bx)

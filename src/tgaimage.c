@@ -2,6 +2,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <math.h>
 
 #define UNCOMPRESSED_TRUE_COLOR 2
 #define RLE_TRUE_COLOR 10
@@ -249,6 +250,8 @@ void ImageFree(Image *img)
 	free(img);
 }
 
+/* drawing */
+
 void SetPixel(Image img, int32_t x, int32_t y, Pixel color)
 {
 	uint32_t i = img.width * y + x;
@@ -276,12 +279,9 @@ void DrawLine(Image img, int32_t ax, int32_t ay, int32_t bx, int32_t by, Pixel c
 		swap_int32(ay, by);
 	}
 
+	float y = ay; 
 	float dy = (by - ay) / (float) (bx - ax);
-
-	float y = ay + 0.5;
 	for (float x = ax; x <= bx; x += 1) {
-		float t = (x - ax) / (float) (bx - ax);
-
 		if (steep)
 			SetPixel(img, y, x, color);
 		else
@@ -290,3 +290,64 @@ void DrawLine(Image img, int32_t ax, int32_t ay, int32_t bx, int32_t by, Pixel c
 		y += dy;
 	}
 }
+
+/* gets the x at a given y on a line defined by a point and its slope */
+static float GetLineX(int32_t ax, int32_t ay, float slope, int32_t y)
+{
+	return (slope * ax - ay + y) / slope;
+}
+
+static void DrawScanline(Image img, int32_t ax, int32_t bx, int32_t y, Pixel color)
+{
+	if (ax > bx)
+		swap_int32(ax, bx);
+
+	for (int32_t x = ax; x <= bx; x++) {
+		SetPixel(img, x, y, color);
+	}
+}
+
+void DrawTriangle(Image img, int32_t ax, int32_t ay, int32_t bx, int32_t by, int32_t cx, int32_t cy, Pixel color)
+{
+	/* sort vertices by y position */
+	if (by > ay) {
+		swap_int32(by, cy);
+		swap_int32(bx, cx);
+	}
+
+	if (cy > ay) {
+		swap_int32(ay, cy);
+		swap_int32(ax, cx);
+	}
+
+	if (cy > by) {
+		swap_int32(by, cy);
+		swap_int32(bx, cx);
+	}
+
+	int32_t total_height = ay - cy;
+
+	/* top half of triangle */
+	if (ay != by) {
+		int32_t segment_height = ay - by;
+		for (int32_t y = ay; y >= by; y--) {
+			int32_t x1 = ax + ((bx - ax) * (ay - y)) / segment_height;
+			int32_t x2 = ax + ((cx - ax) * (ay - y)) / total_height;
+
+			DrawScanline(img, x1, x2, y, color);
+		}
+	}
+
+	/* bottom half of triangle */
+	if (by != cy) {
+		int32_t segment_height = by - cy;
+		for (int32_t y = by - 1; y >= cy; y--) {
+			int32_t x1 = bx + ((cx - bx) * (by - y)) / segment_height;
+			int32_t x2 = ax + ((cx - ax) * (ay - y)) / total_height;
+
+			DrawScanline(img, x1, x2, y, color);
+		}
+	}
+
+}
+

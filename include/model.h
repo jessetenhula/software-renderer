@@ -4,10 +4,6 @@
 #include "tgaimage.h"
 #include "objfile.h"
 
-typedef struct {
-	float x, y;
-} Point;
-
 void RenderWireframe(Mesh *mesh, Image img);
 
 #endif /* MODEL_H */

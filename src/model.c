@@ -5,6 +5,7 @@
 
 #include "model.h"
 #include "colors.h"
+#include "geometry.h"
 
 /* since images are loaded as TGA and TGA images have their origin at the bottom left,
  * Projection does not invert the y axis*/
@@ -21,9 +22,9 @@ static Vertex RotateXZ(Vertex v, float rad)
 }
 
 /* projects vertex to screen coordinates orthogonally */
-static Point ProjectScreen(Vertex v, uint32_t width, uint32_t height)
+static Vec2 ProjectScreen(Vertex v, uint32_t width, uint32_t height)
 {
-	Point p;
+	Vec2 p;
 
 	p.x = ((v.x + 1) / 2) * (float) width;
 	p.y = ((v.y + 1) / 2) * (float) height;
@@ -33,23 +34,23 @@ static Point ProjectScreen(Vertex v, uint32_t width, uint32_t height)
 
 void RenderWireframe(Mesh *mesh, Image img)
 {
-	for (int32_t i = 0; i < mesh->tri_count; i++) {
-		Triangle t = mesh->tris[i];
+	for (int32_t i = 0; i < mesh->face_count; i++) {
+		Face f = mesh->faces[i];
 
 		for (int32_t j = 0; j < 3; j++) {
-			Vertex startv = GetVertex(mesh, t, j);
-			Vertex endv = GetVertex(mesh, t, (j + 1) % 3);
+			Vertex av = GetVertex(mesh, f, j);
+			Vertex bv = GetVertex(mesh, f, (j + 1) % 3);
 
-			Point startp = ProjectScreen(startv, img.width, img.height);
-			Point endp = ProjectScreen(endv, img.width, img.height);
+			Vec2 a = ProjectScreen(av, img.width, img.height);
+			Vec2 b = ProjectScreen(bv, img.width, img.height);
 
-			DrawLine(img, startp.x, startp.y, endp.x, endp.y, RED);
+			DrawLine(img, a.x, a.y, b.x, b.y, RED);
 		}
 	}
 
-	for (int32_t i = 0; i < mesh->vert_count; i++) {
-		Vertex v = mesh->verts[i];
-		Point p = ProjectScreen(v, img.width, img.height);
+	for (int32_t i = 0; i < mesh->vertex_count; i++) {
+		Vertex v = mesh->vertices[i];
+		Vec2 p = ProjectScreen(v, img.width, img.height);
 
 		SetPixel(img, p.x, p.y, WHITE);
 	}

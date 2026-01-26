@@ -249,7 +249,6 @@ void ImageFree(Image *img)
 	free(img);
 }
 
-/* set pixel if in range of image data */
 void SetPixel(Image img, int32_t x, int32_t y, Pixel color)
 {
 	uint32_t i = img.width * y + x;
@@ -260,7 +259,6 @@ void SetPixel(Image img, int32_t x, int32_t y, Pixel color)
 	img.data[i] = color;
 }
 
-/* draw line */
 void DrawLine(Image img, int32_t ax, int32_t ay, int32_t bx, int32_t by, Pixel color)
 {
 	/* line is actually a point */

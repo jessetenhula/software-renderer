@@ -6,7 +6,8 @@
 #include "model.h"
 #include "colors.h"
 
-#define MODEL_DISTANCE 2
+/* since images are loaded as TGA and TGA images have their origin at the bottom left,
+ * Projection does not invert the y axis*/
 
 static Vertex RotateXZ(Vertex v, float rad)
 {
@@ -19,48 +20,18 @@ static Vertex RotateXZ(Vertex v, float rad)
 	return v;
 }
 
-/* returns a 2d projected point in perspective */
-static Point Project(Vertex v)
+/* projects vertex to screen coordinates orthogonally */
+static Point ProjectScreen(Vertex v, uint32_t width, uint32_t height)
 {
 	Point p;
 
-	/* render the model from a certain distance away */
-	v.z += MODEL_DISTANCE;
-
-	if (v.z == 0) {
-		printf("depth zero\n");
-		p.x = 0;
-		p.y = 0;
-		return p;
-	}
-
-	p.x = v.x / v.z;
-	p.y = v.y / v.z;
+	p.x = ((v.x + 1) / 2) * (float) width;
+	p.y = ((v.y + 1) / 2) * (float) height;
 
 	return p;
 }
 
-/* returns a 2d orthogonally projected point */
-static Point ProjectOrthogonal(Vertex v)
-{
-	Point p;
-
-	p.x = v.x;
-	p.y = v.y;
-
-	return p;
-}
-
-/* returns a point with the screen coordinates of a 2d projected point */
-static Point Screen(Point p, uint32_t width, uint32_t height)
-{
-	p.x = ((p.x + 1) / 2) * (float) width;
-	p.y = ((p.y + 1) / 2) * (float) height;
-
-	return p;
-}
-
-void RenderWireframeTGA(Mesh *mesh, Image img)
+void RenderWireframe(Mesh *mesh, Image img)
 {
 	for (int32_t i = 0; i < mesh->tri_count; i++) {
 		Triangle t = mesh->tris[i];
@@ -75,8 +46,8 @@ void RenderWireframeTGA(Mesh *mesh, Image img)
 			Vertex startv = verts[j];
 			Vertex endv = verts[(j + 1) % 3];
 
-			Point startp = Screen(ProjectOrthogonal(startv), img.width, img.height);
-			Point endp = Screen(ProjectOrthogonal(endv), img.width, img.height);
+			Point startp = ProjectScreen(startv, img.width, img.height);
+			Point endp = ProjectScreen(endv, img.width, img.height);
 
 			DrawLine(img, startp.x, startp.y, endp.x, endp.y, RED);
 		}
@@ -84,7 +55,7 @@ void RenderWireframeTGA(Mesh *mesh, Image img)
 
 	for (int32_t i = 0; i < mesh->vert_count; i++) {
 		Vertex v = mesh->verts[i];
-		Point p = Screen(ProjectOrthogonal(v), img.width, img.height);
+		Point p = ProjectScreen(v, img.width, img.height);
 
 		SetPixel(img, p.x, p.y, WHITE);
 	}

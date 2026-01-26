@@ -8,6 +8,6 @@ typedef struct {
 	float x, y;
 } Point;
 
-void RenderWireframeTGA(Mesh *mesh, Image img);
+void RenderWireframe(Mesh *mesh, Image img);
 
 #endif /* MODEL_H */

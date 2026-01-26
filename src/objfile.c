@@ -40,7 +40,7 @@ static void ReadComment(FILE *file)
 	} while (c != EOF);
 }
 
-/* return END_OF_LINE (-1) if at end of line or file, otherwise return 0 */
+/* return END_OF_LINE (-1) if read token is at the end of the line or file, otherwise return 0 */
 static int32_t ReadToken(FILE *file, unsigned char *buffer, uint32_t max_size)
 {
 	int32_t c;
@@ -111,7 +111,7 @@ static void ReadFace(FILE *file, OBJ *obj)
 		ret_code = ReadToken(file, token, TOKEN_MAX_LENGTH);
 		int32_t i = atoi(token);
 
-		/* faces can be defined with negative indices but I don't wanna deal with that */
+		/* faces can be defined with negative indices but I don't want to deal with that */
 		if (i < 0) {
 			free(indices);
 			return;
@@ -188,7 +188,7 @@ Mesh *LoadOBJFile(const char *filename)
 		}
 	}
 
-	// TODO check that data makes sense?
+	// TODO data sanity check?
 
 	obj->verts = realloc(obj->verts, obj->vert_count * sizeof(Vertex));
 	obj->tris = realloc(obj->tris, obj->tri_count * sizeof(Triangle));

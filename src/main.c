@@ -23,7 +23,7 @@ int main(int argc, char *argv[])
 
 	Mesh *mesh = LoadOBJFile("obj/diablo3_pose.obj"); 
 
-	RenderWireframeTGA(mesh, img);
+	RenderWireframe(mesh, img);
 
 	MeshFree(mesh);
 

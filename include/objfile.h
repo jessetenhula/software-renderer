@@ -8,7 +8,7 @@ typedef struct {
 } Vertex;
 
 typedef struct {
-	uint32_t v0, v1, v2;
+	uint32_t vertex_indices[3];
 } Triangle;
 
 typedef struct {
@@ -24,5 +24,8 @@ Mesh *LoadOBJFile(const char *filename);
 
 /* destructor for loaded mesh */
 void MeshFree(Mesh *mesh);
+
+/* convenience function to get the vertex from a triangle */
+Vertex GetVertex(Mesh *mesh, Triangle t, uint32_t i);
 
 #endif /* OBJFILE_H */

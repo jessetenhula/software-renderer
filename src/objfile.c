@@ -128,9 +128,9 @@ static void ReadFace(FILE *file, OBJ *obj)
 	/* fan triangulation */
 	for (int32_t i = 1; i < count - 1; i++) {
 		Triangle t = { 
-			.v0 = indices[0],
-			.v1 = indices[i],
-			.v2 = indices[i + 1]
+			indices[0],
+			indices[i],
+			indices[i + 1]
 		};
 
 		if (obj->tri_count == obj->tri_capacity) {
@@ -213,4 +213,10 @@ void MeshFree(Mesh *mesh)
 		free(mesh->verts);
 
 	free(mesh);
+}
+
+/* convenience function for getting a vertex from a triangle face */
+Vertex GetVertex(Mesh *mesh, Triangle t, uint32_t i)
+{
+	return mesh->verts[t.vertex_indices[i]];
 }

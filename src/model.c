@@ -36,15 +36,9 @@ void RenderWireframe(Mesh *mesh, Image img)
 	for (int32_t i = 0; i < mesh->tri_count; i++) {
 		Triangle t = mesh->tris[i];
 
-		Vertex verts[3] = {
-			mesh->verts[t.v0],
-			mesh->verts[t.v1],
-			mesh->verts[t.v2]
-		};
-
 		for (int32_t j = 0; j < 3; j++) {
-			Vertex startv = verts[j];
-			Vertex endv = verts[(j + 1) % 3];
+			Vertex startv = GetVertex(mesh, t, j);
+			Vertex endv = GetVertex(mesh, t, (j + 1) % 3);
 
 			Point startp = ProjectScreen(startv, img.width, img.height);
 			Point endp = ProjectScreen(endv, img.width, img.height);

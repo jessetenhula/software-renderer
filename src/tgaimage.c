@@ -1,15 +1,35 @@
 #include "tgaimage.h"
 
+#include <stdio.h>
+#include <stdlib.h>
+
 #define UNCOMPRESSED_TRUE_COLOR 2
 #define RLE_TRUE_COLOR 10
-
 #define RGBA_BITS_PER_PIXEL 32
 #define ALPHA_BITS 8
-
-/* helper macros */
 #define swap_int32(a, b) { int32_t t = a; a = b; b = t; }
 
-/* helper functions for run-length-encoded images */
+typedef struct {
+	uint8_t id_length;			/* lengths of id field in bytes, 0 in our case */
+	uint8_t color_map_type; 	/* 0, because we don't use color map */
+	uint8_t image_type;			/* 2 for uncompressed true-color, 10 for rle true-color */ 
+	uint8_t color_map_spec[5];	/* we don't use color map */
+
+	/* image spec */
+	uint16_t x_origin;			/* lower left coordinate */
+	uint16_t y_origin;			/* lower left coordinate */
+	uint16_t width;
+	uint16_t height;
+	uint8_t bpp;				/* bits per pixel, 32 for rgba with 8 bit channels */
+	uint8_t image_descriptor;	/* specifies alpha channel depth, pixel ordering etc. */
+} TGAHeader;
+
+/* rle packet header high-order bit */
+typedef enum {
+	RAW = 0,
+	RLE = 1,
+} PacketType;
+
 static void DecodePacketHeader(uint8_t packet_h, PacketType *type, uint8_t *count)
 {
 	/* packet type from high-order bit */
@@ -46,7 +66,6 @@ static void WriteRLEData(FILE *file, Image img)
 {
 	uint32_t data_size = img.width * img.height;
 	uint32_t run_length = 0;
-	uint8_t packet_h;
 
 	for (int32_t start = 0; start < data_size; start += run_length) {
 		Pixel px_start = img.data[start];
@@ -63,7 +82,7 @@ static void WriteRLEData(FILE *file, Image img)
 		if (run_length > 1) {
 			/* rle */
 
-			packet_h = EncodePacketHeader(RLE, run_length);
+			uint8_t packet_h = EncodePacketHeader(RLE, run_length);
 			fwrite(&packet_h, sizeof(packet_h), 1, file);
 			fwrite(&img.data[start], sizeof(Pixel), 1, file);
 		} else {
@@ -78,7 +97,7 @@ static void WriteRLEData(FILE *file, Image img)
 				run_length++;
 			}
 
-			packet_h = EncodePacketHeader(RAW, run_length);
+			uint8_t packet_h = EncodePacketHeader(RAW, run_length);
 			fwrite(&packet_h, sizeof(packet_h), 1, file);
 			fwrite(&img.data[start], sizeof(Pixel), run_length, file);
 		}
@@ -139,13 +158,12 @@ void WriteTGAImage(const char *filename, Image img, bool rle)
 
 static Pixel *ReadRLEData(FILE *file, TGAHeader h)
 {
-	uint8_t packet_h;
-	PacketType type;
-	uint8_t count;
-
 	Pixel *data = malloc(h.width * h.height * sizeof(Pixel));
 	uint32_t data_index = 0;
 
+	uint8_t packet_h;
+	PacketType type;
+	uint8_t count;
 	do {
 		fread(&packet_h, sizeof(packet_h), 1, file);
 		DecodePacketHeader(packet_h, &type, &count);

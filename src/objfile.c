@@ -1,5 +1,24 @@
 #include "objfile.h"
 
+#include <stdio.h>
+#include <stdbool.h>
+#include <stdlib.h>
+#include <ctype.h>
+
+#define TOKEN_MAX_LENGTH 100
+#define END_OF_LINE -1
+#define OBJ_ARRAY_DEFAULT_CAPACITY 128
+
+/* intermediary struct for loading OBJ file */
+typedef struct {
+	uint32_t vert_count;
+	uint32_t vert_capacity;
+	Vertex *verts;
+
+	uint32_t tri_count;
+	uint32_t tri_capacity;
+	Triangle *tris;
+} OBJ;
 
 static void ReadComment(FILE *file)
 {
@@ -49,9 +68,9 @@ static int32_t ReadToken(FILE *file, unsigned char *buffer, uint32_t max_size)
 
 static void ReadVertex(FILE *file, OBJ *obj)
 {
-	unsigned char token[TOKEN_MAX_LENGTH];
-
 	Vertex v = { 0, 0, 0, 1 };
+
+	unsigned char token[TOKEN_MAX_LENGTH];
 
 	ReadToken(file, token, TOKEN_MAX_LENGTH);
 	v.x = atof(token);
@@ -59,81 +78,88 @@ static void ReadVertex(FILE *file, OBJ *obj)
 	ReadToken(file, token, TOKEN_MAX_LENGTH);
 	v.y = atof(token);
 
-	int32_t return_code = ReadToken(file, token, TOKEN_MAX_LENGTH);
+	int32_t ret_code = ReadToken(file, token, TOKEN_MAX_LENGTH);
 	v.z = atof(token);
 
 	/* optional w value */
-	if (return_code != END_OF_LINE) {
+	if (ret_code != END_OF_LINE) {
 		ReadToken(file, token, TOKEN_MAX_LENGTH);
 		v.w = atof(token);
 	}
 
-	/* list put */
-	if (obj->v_count == obj->v_capacity) {
-		uint32_t new_capacity = obj->v_capacity * 2;
-		obj->vs = realloc(obj->vs, new_capacity * sizeof(Vertex));
-		obj->v_capacity = new_capacity;
+	if (obj->vert_count == obj->vert_capacity) {
+		uint32_t new_capacity = obj->vert_capacity * 2;
+		obj->verts = realloc(obj->verts, new_capacity * sizeof(Vertex));
+		obj->vert_capacity = new_capacity;
 	}
-
-	obj->vs[obj->v_count++] = v;
-	/* list put */
+	obj->verts[obj->vert_count++] = v;
 }
 
 static void ReadFace(FILE *file, OBJ *obj)
 {
+	/* assume face is a triangle */
+	int32_t *indices = malloc(3 * sizeof(int32_t));
+	uint32_t capacity = 3;
+	uint32_t count = 0;
+
 	unsigned char token[TOKEN_MAX_LENGTH];
-
-	Face f;
-	f.count = 0;
-	/* assume the face is a triangle */
-	f.v_is = malloc(3 * sizeof(*(f.v_is)));
-
-	int32_t return_code = 0;
-
+	int32_t ret_code = 0;
 	do {
-		/* if face is not a triangle, allocate space for maximum amount of vertices */
-		if (f.count == 3) 
-			f.v_is = realloc(f.v_is, FACE_MAX_VERTICES * sizeof(*(f.v_is)));
+		if (count == capacity) 
+			indices = realloc(indices, capacity * 2 * sizeof(int32_t));
 
-		return_code = ReadToken(file, token, TOKEN_MAX_LENGTH);
-		/* only reads the regular vertex index (v) */
+		ret_code = ReadToken(file, token, TOKEN_MAX_LENGTH);
 		int32_t i = atoi(token);
 
-		/* reject faces with negative indices */
+		/* faces can be defined with negative indices but I don't wanna deal with that */
 		if (i < 0) {
-			free(f.v_is);
+			free(indices);
 			return;
 		}
 
-		f.v_is[f.count++] = i - 1;
-	} while (return_code != END_OF_LINE && f.count < FACE_MAX_VERTICES);
+		indices[count++] = i - 1;
+	} while (ret_code != END_OF_LINE);
 
-	/* list put */
-	if (obj->f_count == obj->f_capacity) {
-		uint32_t new_capacity = obj->f_capacity * 2;
-		obj->fs = realloc(obj->fs, new_capacity * sizeof(Face));
-		obj->f_capacity = new_capacity;
+	if (count < 3) {
+		free(indices);
+		return;
 	}
 
-	obj->fs[obj->f_count++] = f;
-	/* list put */
+	/* fan triangulation */
+	for (int32_t i = 1; i < count - 1; i++) {
+		Triangle t = { 
+			.v0 = indices[0],
+			.v1 = indices[i],
+			.v2 = indices[i + 1]
+		};
+
+		if (obj->tri_count == obj->tri_capacity) {
+			uint32_t new_capacity = obj->tri_capacity * 2;
+			obj->tris = realloc(obj->tris, new_capacity * sizeof(Triangle));
+			obj->tri_capacity = new_capacity;
+		}
+		obj->tris[obj->tri_count++] = t;
+	}
+
+	free(indices);
 }
 
-static OBJ *InitializeOBJ(void)
+static OBJ *InitializeOBJ(uint32_t capacity)
 {
 	OBJ *obj = malloc(sizeof(OBJ));
 
-	obj->v_count = 0;
-	obj->f_count = 0;
-	obj->v_capacity = INITIAL_VERTEX_CAPACITY;
-	obj->f_capacity = INITIAL_FACE_CAPACITY;
-	obj->vs = malloc(obj->v_capacity * sizeof(Vertex));
-	obj->fs = malloc(obj->f_capacity * sizeof(Face));
+	obj->vert_count = 0;
+	obj->vert_capacity = capacity;;
+	obj->verts = malloc(capacity * sizeof(Vertex));
+
+	obj->tri_count = 0;
+	obj->tri_capacity = capacity;
+	obj->tris = malloc(capacity * sizeof(Triangle));
 
 	return obj;
 }
 
-OBJ *LoadOBJFile(const char *filename)
+Mesh *LoadOBJFile(const char *filename)
 {
 	FILE *file = fopen(filename, "r");
 	if (file == NULL) {
@@ -141,7 +167,7 @@ OBJ *LoadOBJFile(const char *filename)
 		return NULL;
 	}
 
-	OBJ *obj = InitializeOBJ();
+	OBJ *obj = InitializeOBJ(OBJ_ARRAY_DEFAULT_CAPACITY);
 
 	int32_t c;
 	while((c = fgetc(file)) != EOF) {
@@ -162,28 +188,29 @@ OBJ *LoadOBJFile(const char *filename)
 		}
 	}
 
-	if (obj->v_capacity > obj->v_count)
-		obj->vs = realloc(obj->vs, obj->v_count * sizeof(Vertex));
+	// TODO check that data makes sense?
 
-	if (obj->f_capacity > obj->f_count)
-		obj->fs = realloc(obj->fs, obj->f_count * sizeof(Face));
+	obj->verts = realloc(obj->verts, obj->vert_count * sizeof(Vertex));
+	obj->tris = realloc(obj->tris, obj->tri_count * sizeof(Triangle));
 
-	return obj;
-}
-
-void OBJFree(OBJ *obj)
-{
-	for (int i = 0; i < obj->f_count; i++) {
-		Face f = obj->fs[i];
-		if (f.v_is != NULL)
-			free(f.v_is);
-	}
-
-	if (obj->fs != NULL)
-		free(obj->fs);
-	
-	if (obj->vs != NULL)
-		free(obj->vs);
+	Mesh *mesh = malloc(sizeof(Mesh));
+	mesh->vert_count = obj->vert_count;
+	mesh->verts = obj->verts;
+	mesh->tri_count = obj->tri_count;
+	mesh->tris = obj->tris;
 
 	free(obj);
+
+	return mesh;
+}
+
+void MeshFree(Mesh *mesh)
+{
+	if (mesh->tris != NULL)
+		free(mesh->tris);
+
+	if (mesh->verts != NULL)
+		free(mesh->verts);
+
+	free(mesh);
 }

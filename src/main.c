@@ -26,9 +26,9 @@ int main(int argc, char *argv[])
 //	MeshFree(mesh);
 
 	DrawTriangle(img, 20, 20, 180, 400, 360, 50, WHITE);
-	DrawTriangle(img, 200, 20, 200, 400, 360, 50, BLUE);
-
+	DrawTriangle(img, 200, 20, 240, 400, 360, 50, BLUE);
 	DrawTriangle(img, 20, 600, 180, 601, 360, 600, RED);
+
 	WriteTGAImage("image/render.tga", img, true);
 
 	return 0;

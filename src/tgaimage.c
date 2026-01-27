@@ -1,8 +1,9 @@
-#include "tgaimage.h"
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+
+#include "tgaimage.h"
+#include "geometry.h"
 
 #define UNCOMPRESSED_TRUE_COLOR 2
 #define RLE_TRUE_COLOR 10
@@ -342,6 +343,38 @@ void DrawTriangle(Image img, int32_t ax, int32_t ay, int32_t bx, int32_t by, int
 			DrawScanline(img, x1, x2, y, color);
 		}
 	}
-
 }
 
+#define min(a, b) a < b ? a : b
+#define max(a, b) a > b ? a : b
+
+static float SignedArea(int32_t ax, int32_t ay, int32_t bx, int32_t by, int32_t cx, int32_t cy)
+{
+	return 0.5 * (ax*by + bx*cy + cx*ay - bx*ay - cx*by - ax*cy);
+}
+
+void DrawTriangleBB(Image img, int32_t ax, int32_t ay, int32_t bx, int32_t by, int32_t cx, int32_t cy, Pixel color)
+{
+	Vec2 min = {
+		min(min(ax, bx), cx),
+		min(min(ay, by), cy)
+	};
+
+	Vec2 max = {
+		max(max(ax, bx), cx),
+		max(max(ay, by), cy)
+	};
+
+	float sarea = SignedArea(ax, ay, bx, by, cx, cy);
+
+	for (int32_t px = min.x; px <= max.x; px++) {
+		for (int32_t py = min.y; py <= max.y; py++) {
+			float l1 = SignedArea(px, py, bx, by, cx, cy) / sarea;
+			float l2 = SignedArea(ax, ay, px, py, cx, cy) / sarea;
+			float l3 = SignedArea(ax, ay, bx, by, px, py) / sarea;
+
+			if (l1 > 0 && l2 > 0 && l3 > 0)
+				SetPixel(img, px, py, color);
+		}
+	}
+}

@@ -18,6 +18,8 @@ typedef struct {
 	uint32_t face_count;
 	uint32_t face_capacity;
 	Face *faces;
+
+	int32_t ngon_count;
 } OBJ;
 
 static void ReadComment(FILE *file)
@@ -125,6 +127,9 @@ static void ReadFace(FILE *file, OBJ *obj)
 		return;
 	}
 
+	if (count > 3)
+		obj->ngon_count++;
+
 	/* fan triangulation */
 	for (int32_t i = 1; i < count - 1; i++) {
 		Face f = { 
@@ -155,6 +160,8 @@ static OBJ *InitializeOBJ(uint32_t capacity)
 	obj->face_count = 0;
 	obj->face_capacity = capacity;
 	obj->faces = malloc(capacity * sizeof(Face));
+
+	obj->ngon_count = 0;
 
 	return obj;
 }
@@ -189,6 +196,11 @@ Mesh *LoadOBJFile(const char *filename)
 	}
 
 	// TODO data sanity check?
+	
+//	printf("%s\n", filename);
+//	printf("vertices: %d\n", obj->vertex_count);
+//	printf("faces: %d\n", obj->face_count);
+//	printf("ngons: %d\n", obj->ngon_count);
 
 	obj->vertices = realloc(obj->vertices, obj->vertex_count * sizeof(Vertex));
 	obj->faces = realloc(obj->faces, obj->face_count * sizeof(Face));

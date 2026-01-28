@@ -56,3 +56,28 @@ void RenderWireframe(Mesh *mesh, Image img)
 	}
 }
 
+static Pixel RandColor()
+{
+	Pixel color = {
+		.r = 128,
+		.g = (rand() % 128) + 128,
+		.b = (rand() % 128) + 128,
+		.a = 255
+	};
+
+	return color;
+}
+
+void Render(Mesh *mesh, Image img)
+{
+	for (int32_t i = 0; i < mesh->face_count; i++) {
+		Face f = mesh->faces[i];
+
+		Vec2 a = ProjectScreen(GetVertex(mesh, f, 0), img.width, img.height);
+		Vec2 b = ProjectScreen(GetVertex(mesh, f, 1), img.width, img.height);
+		Vec2 c = ProjectScreen(GetVertex(mesh, f, 2), img.width, img.height);
+
+		DrawTriangle(img, a.x, a.y, b.x, b.y, c.x, c.y, RandColor());
+	}
+
+}

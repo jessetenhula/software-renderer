@@ -5,5 +5,6 @@
 #include "objfile.h"
 
 void RenderWireframe(Mesh *mesh, Image img);
+void Render(Mesh *mesh, Image img);
 
 #endif /* MODEL_H */

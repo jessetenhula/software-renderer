@@ -306,8 +306,8 @@ void DrawTriangle(Image img, int32_t ax, int32_t ay, int32_t bx, int32_t by, int
 {
 	/* sort vertices by y position */
 	if (by > ay) {
-		swap_int32(by, cy);
-		swap_int32(bx, cx);
+		swap_int32(ay, by);
+		swap_int32(ax, bx);
 	}
 
 	if (cy > ay) {
@@ -316,8 +316,8 @@ void DrawTriangle(Image img, int32_t ax, int32_t ay, int32_t bx, int32_t by, int
 	}
 
 	if (cy > by) {
-		swap_int32(by, cy);
-		swap_int32(bx, cx);
+		swap_int32(cy, by);
+		swap_int32(cx, bx);
 	}
 
 	int32_t total_height = ay - cy;
@@ -345,36 +345,50 @@ void DrawTriangle(Image img, int32_t ax, int32_t ay, int32_t bx, int32_t by, int
 	}
 }
 
-#define min(a, b) a < b ? a : b
-#define max(a, b) a > b ? a : b
-
-static float SignedArea(int32_t ax, int32_t ay, int32_t bx, int32_t by, int32_t cx, int32_t cy)
+static int32_t min_int32(int32_t a, int32_t b)
 {
-	return 0.5 * (ax*by + bx*cy + cx*ay - bx*ay - cx*by - ax*cy);
+	if (a < b)
+		return a;
+	else
+		return b;
 }
 
-void DrawTriangleBB(Image img, int32_t ax, int32_t ay, int32_t bx, int32_t by, int32_t cx, int32_t cy, Pixel color)
+static int32_t max_int32(int32_t a, int32_t b)
 {
-	Vec2 min = {
-		min(min(ax, bx), cx),
-		min(min(ay, by), cy)
-	};
+	if (a > b)
+		return a;
+	else
+		return b;
+}
 
-	Vec2 max = {
-		max(max(ax, bx), cx),
-		max(max(ay, by), cy)
-	};
+static double SignedArea(int32_t ax, int32_t ay, int32_t bx, int32_t by, int32_t cx, int32_t cy)
+{
+	return 0.5*((by-ay)*(bx+ax) + (cy-by)*(cx+bx) + (ay-cy)*(ax+cx));;
+}
 
-	float sarea = SignedArea(ax, ay, bx, by, cx, cy);
+void DrawTriangleBoundingBox(Image img, int32_t ax, int32_t ay, int32_t bx, int32_t by, int32_t cx, int32_t cy, Pixel color)
+{
+	int32_t min_x = min_int32(min_int32(ax, bx), cx);
+	int32_t min_y = min_int32(min_int32(ay, by), cy);
 
-	for (int32_t px = min.x; px <= max.x; px++) {
-		for (int32_t py = min.y; py <= max.y; py++) {
-			float l1 = SignedArea(px, py, bx, by, cx, cy) / sarea;
-			float l2 = SignedArea(ax, ay, px, py, cx, cy) / sarea;
-			float l3 = SignedArea(ax, ay, bx, by, px, py) / sarea;
+	int32_t max_x = max_int32(max_int32(ax, bx), cx);
+	int32_t max_y = max_int32(max_int32(ay, by), cy);
 
-			if (l1 > 0 && l2 > 0 && l3 > 0)
-				SetPixel(img, px, py, color);
+	double sarea = SignedArea(ax, ay, bx, by, cx, cy);
+
+	if (sarea < 1)
+		return;
+
+	for (int32_t px = min_x; px <= max_x; px++) {
+		for (int32_t py = min_y; py <= max_y; py++) {
+			double l1 = SignedArea(px, py, bx, by, cx, cy) / sarea;
+			double l2 = SignedArea(px, py, cx, cy, ax, ay) / sarea;
+			double l3 = SignedArea(px, py, ax, ay, bx, by) / sarea;
+
+			if (l1 < -0.001 || l2 < -0.001 || l3 < -0.001)
+				continue;
+
+			SetPixel(img, px, py, color);
 		}
 	}
 }

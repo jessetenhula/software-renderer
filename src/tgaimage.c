@@ -1,6 +1,5 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <math.h>
 
 #include "tgaimage.h"
 #include "geometry.h"
@@ -9,7 +8,6 @@
 #define RLE_TRUE_COLOR 10
 #define RGBA_BITS_PER_PIXEL 32
 #define ALPHA_BITS 8
-#define swap_int32(a, b) { int32_t t = a; a = b; b = t; }
 
 typedef struct {
 	uint8_t id_length;			/* lengths of id field in bytes, 0 in our case */
@@ -251,7 +249,10 @@ void ImageFree(Image *img)
 	free(img);
 }
 
-/* drawing */
+Pixel GetPixel(Image img, int32_t x, int32_t y)
+{
+	return img.data[img.width * y + x ];
+}
 
 void SetPixel(Image img, int32_t x, int32_t y, Pixel color)
 {
@@ -261,137 +262,4 @@ void SetPixel(Image img, int32_t x, int32_t y, Pixel color)
 		return;
 
 	img.data[i] = color;
-}
-
-void DrawLine(Image img, int32_t ax, int32_t ay, int32_t bx, int32_t by, Pixel color)
-{
-	/* line is actually a point */
-	if (ax == bx && ay == by)
-		SetPixel(img, ax, ay, color);
-
-	bool steep = (abs(by - ay) > abs(bx - ax));
-	if (steep) {
-		swap_int32(ax, ay);
-		swap_int32(bx, by);
-	}
-
-	if (ax > bx) {
-		swap_int32(ax, bx);
-		swap_int32(ay, by);
-	}
-
-	float y = ay; 
-	float dy = (by - ay) / (float) (bx - ax);
-	for (float x = ax; x <= bx; x += 1) {
-		if (steep)
-			SetPixel(img, y, x, color);
-		else
-			SetPixel(img, x, y, color);
-
-		y += dy;
-	}
-}
-
-static void DrawScanline(Image img, int32_t ax, int32_t bx, int32_t y, Pixel color)
-{
-	if (ax > bx)
-		swap_int32(ax, bx);
-
-	for (int32_t x = ax; x <= bx; x++) {
-		SetPixel(img, x, y, color);
-	}
-}
-
-void DrawTriangle(Image img, int32_t ax, int32_t ay, int32_t bx, int32_t by, int32_t cx, int32_t cy, Pixel color)
-{
-	/* sort vertices by y position */
-	if (by > ay) {
-		swap_int32(ay, by);
-		swap_int32(ax, bx);
-	}
-
-	if (cy > ay) {
-		swap_int32(ay, cy);
-		swap_int32(ax, cx);
-	}
-
-	if (cy > by) {
-		swap_int32(cy, by);
-		swap_int32(cx, bx);
-	}
-
-	int32_t total_height = ay - cy;
-
-	/* top half of triangle */
-	if (ay != by) {
-		int32_t segment_height = ay - by;
-		for (int32_t y = ay; y >= by; y--) {
-			int32_t x1 = ax + ((bx - ax) * (ay - y)) / segment_height;
-			int32_t x2 = ax + ((cx - ax) * (ay - y)) / total_height;
-
-			DrawScanline(img, x1, x2, y, color);
-		}
-	}
-
-	/* bottom half of triangle */
-	if (by != cy) {
-		int32_t segment_height = by - cy;
-		for (int32_t y = by - 1; y >= cy; y--) {
-			int32_t x1 = bx + ((cx - bx) * (by - y)) / segment_height;
-			int32_t x2 = ax + ((cx - ax) * (ay - y)) / total_height;
-
-			DrawScanline(img, x1, x2, y, color);
-		}
-	}
-}
-
-static int32_t min_int32(int32_t a, int32_t b)
-{
-	if (a < b)
-		return a;
-	else
-		return b;
-}
-
-static int32_t max_int32(int32_t a, int32_t b)
-{
-	if (a > b)
-		return a;
-	else
-		return b;
-}
-
-static double SignedArea(int32_t ax, int32_t ay, int32_t bx, int32_t by, int32_t cx, int32_t cy)
-{
-	return 0.5*((by-ay)*(bx+ax) + (cy-by)*(cx+bx) + (ay-cy)*(ax+cx));;
-}
-
-void DrawTriangleBoundingBox(Image img, uint8_t *z_buffer, int32_t ax, int32_t ay, uint8_t az, int32_t bx, int32_t by, uint8_t bz, int32_t cx, int32_t cy, uint8_t cz, Pixel color)
-{
-	int32_t min_x = min_int32(min_int32(ax, bx), cx);
-	int32_t min_y = min_int32(min_int32(ay, by), cy);
-
-	int32_t max_x = max_int32(max_int32(ax, bx), cx);
-	int32_t max_y = max_int32(max_int32(ay, by), cy);
-
-	double sarea = SignedArea(ax, ay, bx, by, cx, cy);
-
-	for (int32_t px = min_x; px <= max_x; px++) {
-		for (int32_t py = min_y; py <= max_y; py++) {
-			double l1 = SignedArea(px, py, bx, by, cx, cy) / sarea;
-			double l2 = SignedArea(px, py, cx, cy, ax, ay) / sarea;
-			double l3 = SignedArea(px, py, ax, ay, bx, by) / sarea;
-
-			if (l1 < -0.001 || l2 < -0.001 || l3 < -0.001)
-				continue;
-
-			double depth = l1*az + l2*bz + l3*cz;
-			if (z_buffer[img.width * py + px] < depth)
-				z_buffer[img.width * py + px] = depth;
-			else
-				continue;
-
-			SetPixel(img, px, py, color);
-		}
-	}
 }

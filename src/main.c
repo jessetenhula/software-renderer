@@ -1,12 +1,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
-#include <math.h>
 #include <time.h>
 
 #include "tgaimage.h"
-#include "objfile.h"
 #include "model.h"
+#include "gl.h"
 #include "colors.h"
 
 #define WIDTH 800

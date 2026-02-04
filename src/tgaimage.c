@@ -366,7 +366,7 @@ static double SignedArea(int32_t ax, int32_t ay, int32_t bx, int32_t by, int32_t
 	return 0.5*((by-ay)*(bx+ax) + (cy-by)*(cx+bx) + (ay-cy)*(ax+cx));;
 }
 
-void DrawTriangleBoundingBox(Image img, int32_t ax, int32_t ay, int32_t bx, int32_t by, int32_t cx, int32_t cy, Pixel color)
+void DrawTriangleBoundingBox(Image img, uint8_t *z_buffer, int32_t ax, int32_t ay, uint8_t az, int32_t bx, int32_t by, uint8_t bz, int32_t cx, int32_t cy, uint8_t cz, Pixel color)
 {
 	int32_t min_x = min_int32(min_int32(ax, bx), cx);
 	int32_t min_y = min_int32(min_int32(ay, by), cy);
@@ -376,9 +376,6 @@ void DrawTriangleBoundingBox(Image img, int32_t ax, int32_t ay, int32_t bx, int3
 
 	double sarea = SignedArea(ax, ay, bx, by, cx, cy);
 
-	if (sarea < 1)
-		return;
-
 	for (int32_t px = min_x; px <= max_x; px++) {
 		for (int32_t py = min_y; py <= max_y; py++) {
 			double l1 = SignedArea(px, py, bx, by, cx, cy) / sarea;
@@ -386,6 +383,12 @@ void DrawTriangleBoundingBox(Image img, int32_t ax, int32_t ay, int32_t bx, int3
 			double l3 = SignedArea(px, py, ax, ay, bx, by) / sarea;
 
 			if (l1 < -0.001 || l2 < -0.001 || l3 < -0.001)
+				continue;
+
+			double depth = l1*az + l2*bz + l3*cz;
+			if (z_buffer[img.width * py + px] < depth)
+				z_buffer[img.width * py + px] = depth;
+			else
 				continue;
 
 			SetPixel(img, px, py, color);

@@ -21,13 +21,14 @@ static Vertex RotateXZ(Vertex v, float rad)
 	return v;
 }
 
-/* projects vertex to screen coordinates orthogonally */
-static Vec2 ProjectScreen(Vertex v, uint32_t width, uint32_t height)
+/* projects vertex to screen coordinates orthogonally, includes depth */
+static Vec3 Project(Vertex v, uint32_t width, uint32_t height)
 {
-	Vec2 p;
+	Vec3 p;
 
 	p.x = ((v.x + 1) / 2) * (float) width;
 	p.y = ((v.y + 1) / 2) * (float) height;
+	p.z = ((v.z + 1) / 2) * 255;
 
 	return p;
 }
@@ -41,8 +42,8 @@ void RenderWireframe(Mesh *mesh, Image img)
 			Vertex av = GetVertex(mesh, f, j);
 			Vertex bv = GetVertex(mesh, f, (j + 1) % 3);
 
-			Vec2 a = ProjectScreen(av, img.width, img.height);
-			Vec2 b = ProjectScreen(bv, img.width, img.height);
+			Vec3 a = Project(av, img.width, img.height);
+			Vec3 b = Project(bv, img.width, img.height);
 
 			DrawLine(img, a.x, a.y, b.x, b.y, RED);
 		}
@@ -50,7 +51,7 @@ void RenderWireframe(Mesh *mesh, Image img)
 
 	for (int32_t i = 0; i < mesh->vertex_count; i++) {
 		Vertex v = mesh->vertices[i];
-		Vec2 p = ProjectScreen(v, img.width, img.height);
+		Vec3 p = Project(v, img.width, img.height);
 
 		SetPixel(img, p.x, p.y, WHITE);
 	}
@@ -70,14 +71,20 @@ static Pixel RandColor()
 
 void Render(Mesh *mesh, Image img)
 {
+	uint8_t *z_buffer = calloc(img.width * img.height, sizeof(double));
+
 	for (int32_t i = 0; i < mesh->face_count; i++) {
 		Face f = mesh->faces[i];
 
-		Vec2 a = ProjectScreen(GetVertex(mesh, f, 0), img.width, img.height);
-		Vec2 b = ProjectScreen(GetVertex(mesh, f, 1), img.width, img.height);
-		Vec2 c = ProjectScreen(GetVertex(mesh, f, 2), img.width, img.height);
+		Vertex av = GetVertex(mesh, f, 0);
+		Vertex bv = GetVertex(mesh, f, 1);
+		Vertex cv = GetVertex(mesh, f, 2);
 
-		DrawTriangle(img, a.x, a.y, b.x, b.y, c.x, c.y, RandColor());
+		Vec3 a = Project(av, img.width, img.height);
+		Vec3 b = Project(bv, img.width, img.height);
+		Vec3 c = Project(cv, img.width, img.height);
+
+		DrawTriangleBoundingBox(img, z_buffer, a.x, a.y, a.z, b.x, b.y, b.z, c.x, c.y, c.z, RandColor());
 	}
 
 }

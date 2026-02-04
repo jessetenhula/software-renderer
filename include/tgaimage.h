@@ -29,6 +29,6 @@ void SetPixel(Image img, int32_t x, int32_t y, Pixel color);
 void DrawLine(Image img, int32_t ax, int32_t ay, int32_t bx, int32_t by, Pixel color);
 
 void DrawTriangle(Image img, int32_t ax, int32_t ay, int32_t bx, int32_t by, int32_t cx, int32_t cy, Pixel color);
-void DrawTriangleBoundingBox(Image img, int32_t ax, int32_t ay, int32_t bx, int32_t by, int32_t cx, int32_t cy, Pixel color);
+void DrawTriangleBoundingBox(Image img, uint8_t *z_buffer, int32_t ax, int32_t ay, uint8_t az, int32_t bx, int32_t by, uint8_t bz, int32_t cx, int32_t cy, uint8_t cz, Pixel color);
 
 #endif /* TGAIMAGE_H */

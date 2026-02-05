@@ -44,7 +44,7 @@ Vec3 Vec3Cross(Vec3 a, Vec3 b)
 	return (Vec3) {
 		a.y * b.z - b.y * a.z,
 		a.z * b.x - b.z * a.x,
-		a.x * b.y - b.x * a.y,
+		a.x * b.y - b.x * a.y
 	};
 }
 
@@ -66,3 +66,16 @@ double Vec4Dot(Vec4 a, Vec4 b)
 }
 
 /* Matrix */
+
+void MatrixMultiply(Matrix m)
+{
+}
+
+void MatrixInvert(Matrix m)
+{
+}
+
+
+void MatrixTranspose(Matrix m)
+{
+}

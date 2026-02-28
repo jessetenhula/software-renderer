@@ -33,6 +33,7 @@ int main(int argc, char *argv[])
 	WriteTGAImage("image/render.tga", img, true);
 
 	free(img.data);
+
 	*/
 
 	Matrix a;
@@ -57,21 +58,13 @@ int main(int argc, char *argv[])
 	MatrixSet(&b, 1, 1, 1.0);
 	MatrixSet(&b, 1, 2, 0.0);
 
-	for (int i = 0; i < b.rows; i++) {
-		for (int j = 0; j < b.cols; j++) {
-			printf("%lf\n", MatrixGet(b, i, j));
-		}
-	}
-
-	printf("\n");
-
+	MatrixPrint(b);
+	Matrix *d = MatrixTranspose(b);
+	MatrixPrint(*d);
 	Matrix *c = MatrixMultiply(a, b);
+	MatrixPrint(*c);
 
-	for (int i = 0; i < c->rows; i++) {
-		for (int j = 0; j < c->cols; j++) {
-			printf("%lf\n", MatrixGet(*c, i, j));
-		}
-	}
+	MatrixInvert(a);
 
 	return 0;
 }

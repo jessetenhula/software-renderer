@@ -84,6 +84,45 @@ void MatrixSet(Matrix *m, uint16_t row, uint16_t col, double val)
 	m->data[col + m->cols * row] = val;
 }
 
+static Matrix *CreateIdentityMatrix(int16_t side_length)
+{
+	Matrix *m = malloc(sizeof(Matrix));
+
+	m->rows = side_length;
+	m->cols = side_length;
+
+	m->data = malloc(side_length * side_length * sizeof(*m->data));
+
+	for (int row = 0; row < m->rows; row++) {
+		for (int col = 0; col < m->cols; col++) {
+			if (row == col)
+				MatrixSet(m, row, col, 1);
+			else
+				MatrixSet(m, row, col, 0);
+		}
+	}
+
+	return m;
+}
+
+void MatrixFree(Matrix *m)
+{
+	free(m->data);
+	free(m);
+}
+
+void MatrixPrint(Matrix m)
+{
+	printf("Matrix (%d, %d)\n", m.cols, m.rows);
+
+	for (int row = 0; row < m.rows; row++) {
+		for (int col = 0; col < m.cols; col++) {
+			printf("%lf ", MatrixGet(m, row, col));
+		}
+		printf("\n");
+	}
+}
+
 Matrix *MatrixMultiply(Matrix a, Matrix b)
 {
 	/* For matrix multiplication, the number of columns in the first matrix must be equal to the number of rows in the second matrix.
@@ -111,11 +150,76 @@ Matrix *MatrixMultiply(Matrix a, Matrix b)
 	return c;
 }
 
+static void MatrixMultiplyScalar(Matrix *m, double mult)
+{
+	for (int row = 0; row < m->rows; row++) {
+		for (int col = 0; col < m->cols; col++) {
+			MatrixSet(m, row, col, MatrixGet(*m, row, col) * mult);
+		}
+	}
+}
+
+Matrix *MatrixTranspose(Matrix m)
+{
+	Matrix *trans = malloc(sizeof(Matrix));
+	trans->rows = m.cols;
+	trans->cols = m.rows;
+	trans->data = malloc(trans->rows * trans->cols * sizeof(*trans->data));
+
+	for (int i = 0; i < m.rows; i++) {
+		for (int j = 0; j < m.cols; j++) {
+			MatrixSet(trans, j, i, MatrixGet(m, i, j));
+		}
+	}
+
+	return trans;
+}
+
+/* Augments two square matrices of the same size, used in MatrixInvert */
+static Matrix *MatrixAugment(Matrix a, Matrix b)
+{
+	if (a.rows != a.cols || a.rows != b.rows || a.cols != b.cols)
+		return NULL;
+
+	Matrix *aug = malloc(sizeof(Matrix));
+	aug->rows = a.rows;
+	aug->cols = a.cols * 2;
+	aug->data = malloc(aug->rows * aug->cols * sizeof(*aug->data));
+
+	for (int row = 0; row < aug->rows; row++) {
+		for (int col = 0; col < aug->cols; col++) {
+			int i = col + aug->cols * row;
+
+			if (col < aug->cols / 2)
+				MatrixSet(aug, row, col, MatrixGet(a, row, col));
+			else
+				MatrixSet(aug, row, col, MatrixGet(b, row, col % (aug->cols / 2)));
+		}
+	}
+
+	return aug;
+}
+
+static void MatrixSwapRow(Matrix *m, uint16_t row_a, uint16_t row_b)
+{
+	if (row_a < 0 || row_b < 0 || row_a >= m->rows || row_b >= m->rows)
+		return;
+
+	for (int col = 0; col < m->cols; col++) {
+		double temp = MatrixGet(*m, row_a, col);
+		MatrixSet(m, row_a, col, MatrixGet(*m, row_b, col));
+		MatrixSet(m, row_b, col, temp); 
+	}
+}
+
+/* For a matrix to be invertible it must be square, and the determinant must be nonzero */
 void MatrixInvert(Matrix m)
 {
+	/* not a square matrix */
+	if (m.rows != m.cols)
+		return;
+
+	Matrix *identity = CreateIdentityMatrix(m.rows);
+	Matrix *aug = MatrixAugment(m, *identity);
 }
 
-
-void MatrixTranspose(Matrix m)
-{
-}

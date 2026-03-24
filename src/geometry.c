@@ -221,5 +221,6 @@ void MatrixInvert(Matrix m)
 
 	Matrix *identity = CreateIdentityMatrix(m.rows);
 	Matrix *aug = MatrixAugment(m, *identity);
+	MatrixPrint(*aug);
 }
 

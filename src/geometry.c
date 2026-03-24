@@ -221,5 +221,10 @@ void MatrixInvert(Matrix m)
 
 	Matrix *identity = CreateIdentityMatrix(m.rows);
 	Matrix *aug = MatrixAugment(m, *identity);
+<<<<<<< HEAD
+=======
+
+	MatrixPrint(*aug);
+>>>>>>> 8f6c4b3a48762a9631c0e5651f0276155365c4d4
 }
 

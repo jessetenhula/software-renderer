@@ -212,6 +212,29 @@ static void MatrixSwapRow(Matrix *m, uint16_t row_a, uint16_t row_b)
 	}
 }
 
+static void MatrixMultiplyRowByScalar(Matrix *m, uint16_t row, double scalar)
+{
+	if (row < 0 || row >= m->rows)
+		return;
+
+	for (int col = 0; col < m->cols; col++) {
+		MatrixSet(m, row, col, MatrixGet(*m, row, col) * scalar);
+	}
+}
+
+static void MatrixAddRowToAnother(Matrix *m, uint16_t row_from, uint16_t row_to, double multiplier)
+{
+	if (row_from < 0 || row_to < 0 || row_from >= m->rows || row_to >= m->rows)
+		return;
+
+	for (int col = 0; col < m->cols; col++) {
+		double from = MatrixGet(*m, row_from, col);
+		double to = MatrixGet(*m, row_to, col);
+
+		MatrixSet(m, row_to, col, to + (multiplier * from));
+	}
+}
+
 /* For a matrix to be invertible it must be square, and the determinant must be nonzero */
 void MatrixInvert(Matrix m)
 {
@@ -219,7 +242,7 @@ void MatrixInvert(Matrix m)
 	if (m.rows != m.cols)
 		return;
 
-	Matrix *identity = CreateIdentityMatrix(m.rows);
+	Matrix *identity = CreateIdentityMatrix(3);
 	Matrix *aug = MatrixAugment(m, *identity);
 	MatrixPrint(*aug);
 }

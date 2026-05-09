@@ -242,8 +242,34 @@ void MatrixInvert(Matrix m)
 	if (m.rows != m.cols)
 		return;
 
-	Matrix *identity = CreateIdentityMatrix(3);
+	Matrix *identity = CreateIdentityMatrix(m.rows);
 	Matrix *aug = MatrixAugment(m, *identity);
-	MatrixPrint(*aug);
+	MatrixFree(identity);
+
+	for (int i = 0; i < m.rows; i++) {
+
+		// Get the maximum value for the pivot And swap the row
+		int pivot = i;
+		for (int j = i+1; j < m.rows; j++) {
+			if (MatrixGet(*aug, j, i) > MatrixGet(*aug, pivot, i)) {
+				pivot = j;
+			}
+		}
+		MatrixSwapRow(aug, i, pivot);
+		double pivot_value = MatrixGet(*aug, i, i);
+		// Check if abs(pivot_value) is close to zero (matrix is then invertible!)
+
+		// Normalize pivot row
+		MatrixMultiplyRowByScalar(aug, i, 1 / pivot_value);
+
+		// Eliminate other rows
+		for (int j = 0; j < m.rows; j++) {
+			if (i != j) {
+				MatrixAddRowToAnother(aug, i, j, -1 * MatrixGet(*aug, j, i));
+			}
+		}
+	}
+
+	MatrixFree(aug);
 }
 

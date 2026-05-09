@@ -36,35 +36,25 @@ int main(int argc, char *argv[])
 
 	*/
 
-	Matrix a;
-	a.cols = 2;
-	a.rows = 2;
-	a.data = malloc(2 * 2 * sizeof(double));
-
 	Matrix b;
 	b.cols = 3;
-	b.rows = 2;
-	b.data = malloc(2 * 3 * sizeof(double));
+	b.rows = 3;
+	b.data = malloc(3 * 3 * sizeof(double));
 
-	MatrixSet(&a, 0, 0, 1.0);
-	MatrixSet(&a, 1, 0, 3.0);
-	MatrixSet(&a, 0, 1, 2.0);
-	MatrixSet(&a, 1, 1, 4.0);
+	MatrixSet(&b, 0, 0, 5.0);
+	MatrixSet(&b, 0, 1, 7.0);
+	MatrixSet(&b, 0, 2, 9.0);
 
-	MatrixSet(&b, 0, 0, 0.0);
-	MatrixSet(&b, 0, 1, 5.0);
-	MatrixSet(&b, 0, 2, 2.0);
-	MatrixSet(&b, 1, 0, 3.0);
-	MatrixSet(&b, 1, 1, 1.0);
-	MatrixSet(&b, 1, 2, 0.0);
+	MatrixSet(&b, 1, 0, 4.0);
+	MatrixSet(&b, 1, 1, 3.0);
+	MatrixSet(&b, 1, 2, 8.0);
+
+	MatrixSet(&b, 2, 0, 7.0);
+	MatrixSet(&b, 2, 1, 5.0);
+	MatrixSet(&b, 2, 2, 6.0);
 
 	MatrixPrint(b);
-	Matrix *d = MatrixTranspose(b);
-	MatrixPrint(*d);
-	Matrix *c = MatrixMultiply(a, b);
-	MatrixPrint(*c);
-
-	MatrixInvert(a);
+	MatrixInvert(b);
 
 	return 0;
 }

@@ -68,18 +68,18 @@ double Vec4Dot(Vec4 a, Vec4 b)
 
 /* Matrix */
 
-double MatrixGet(Matrix m, uint16_t row, uint16_t col)
+inline double MatrixGet(Matrix m, uint16_t row, uint16_t col)
 {
-	if ((col + m.cols * row) >= m.cols * m.rows)
-		printf("dangerous MatrixGet!\n");
+//	if ((col + m.cols * row) >= m.cols * m.rows)
+//		printf("dangerous MatrixGet!\n");
 
 	return m.data[col + m.cols * row];
 }
 
-void MatrixSet(Matrix *m, uint16_t row, uint16_t col, double val)
+inline void MatrixSet(Matrix *m, uint16_t row, uint16_t col, double val)
 {
-	if ((col + m->cols * row) >= m->cols * m->rows)
-		printf("dangerous MatrixSet!\n");
+//	if ((col + m->cols * row) >= m->cols * m->rows)
+//		printf("dangerous MatrixSet!\n");
 
 	m->data[col + m->cols * row] = val;
 }
@@ -236,11 +236,11 @@ static void MatrixAddRowToAnother(Matrix *m, uint16_t row_from, uint16_t row_to,
 }
 
 /* For a matrix to be invertible it must be square, and the determinant must be nonzero */
-void MatrixInvert(Matrix m)
+Matrix *MatrixInvert(Matrix m)
 {
 	/* not a square matrix */
 	if (m.rows != m.cols)
-		return;
+		return NULL;
 
 	Matrix *identity = CreateIdentityMatrix(m.rows);
 	Matrix *aug = MatrixAugment(m, *identity);
@@ -251,13 +251,17 @@ void MatrixInvert(Matrix m)
 		// Get the maximum value for the pivot And swap the row
 		int pivot = i;
 		for (int j = i+1; j < m.rows; j++) {
-			if (MatrixGet(*aug, j, i) > MatrixGet(*aug, pivot, i)) {
+			if (fabs(MatrixGet(*aug, j, i)) > fabs(MatrixGet(*aug, pivot, i))) {
 				pivot = j;
 			}
 		}
 		MatrixSwapRow(aug, i, pivot);
 		double pivot_value = MatrixGet(*aug, i, i);
-		// Check if abs(pivot_value) is close to zero (matrix is then invertible!)
+
+		// check if matrix is invertible (and avoid division by zero)
+		if (fabs(pivot_value) < 1e-12) {
+			return NULL;
+		}
 
 		// Normalize pivot row
 		MatrixMultiplyRowByScalar(aug, i, 1 / pivot_value);
@@ -270,6 +274,22 @@ void MatrixInvert(Matrix m)
 		}
 	}
 
+	// Copy the inverted values into the new matrix
+	Matrix *inv = malloc(sizeof(Matrix));
+
+	inv->rows = m.rows;
+	inv->cols = m.rows;
+
+	inv->data = malloc(inv->rows * inv->rows * sizeof(*inv->data));
+
+	for (int row = 0; row < inv->rows; row++) {
+		for (int col = 0; col < inv->cols; col++) {
+			MatrixSet(inv, row, col, MatrixGet(*aug, row, col + inv->cols));
+		}
+	}
+
 	MatrixFree(aug);
+
+	return inv;
 }
 

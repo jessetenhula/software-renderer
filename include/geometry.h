@@ -36,10 +36,11 @@ double Vec4Dot(Vec4 a, Vec4 b);
 
 double MatrixGet(Matrix m, uint16_t row, uint16_t col);
 void MatrixSet(Matrix *m, uint16_t row, uint16_t col, double val);
-void MatrixFree(Matrix *m);
 void MatrixPrint(Matrix m);
+
 Matrix *MatrixMultiply(Matrix a, Matrix b);
 Matrix *MatrixTranspose(Matrix m);
-void MatrixInvert(Matrix m);
+Matrix *MatrixInvert(Matrix m);
+void MatrixFree(Matrix *m);
 
 #endif /* GEOMETRY_H */

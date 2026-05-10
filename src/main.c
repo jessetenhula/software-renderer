@@ -54,7 +54,8 @@ int main(int argc, char *argv[])
 	MatrixSet(&b, 2, 2, 6.0);
 
 	MatrixPrint(b);
-	MatrixInvert(b);
+	Matrix *inv_b = MatrixInvert(b);
+	MatrixPrint(*inv_b);
 
 	return 0;
 }
